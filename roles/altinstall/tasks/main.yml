@@ -120,9 +120,7 @@
     src: ./templates/config.ipxe.j2
     dest: "{{ altinstall_root_dir }}/tftp/config-{{ target_cpu }}.ipxe"
     mode: 0644
-  loop:
-    - x86_64
-    - aarch64
+  loop: "{{ alt_images|map(attribute='alt_arch')|unique }}"
   loop_control:
     loop_var: target_cpu
   become: true
