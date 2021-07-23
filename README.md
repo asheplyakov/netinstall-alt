@@ -2,15 +2,15 @@
 
 ## Prerequisites
 
-* Machine running ALT Linux or Ubuntu (called `target` later on)
-* Another machine running Linux (called `host` later on)
+* Machine running ALT Linux or Ubuntu (called `target` later on). This one will run DHCP, TFTP, and other necessary services
+* Another machine running Linux (called `host` later on).
 
 ### Target machine requirements
 
 1. Internet connection (to install packages, etc)
 2. A compete installation of python is available
 3. Enough disk space to hold ISOs in `/srv/export/dist`
-4. TCP port 80, 445 and udp ports 67, 69 are free (nothing listens there)
+4. TCP ports 80, 445 and udp ports 67, 69 are free (nothing listens there)
 5. User account (called `remote user` later on)
 6. `remote user` has passwordless sudo access
 7. `remote user` can login via ssh without password (by ssh keys)
