@@ -1,0 +1,21 @@
+[global]
+	workgroup = {{ altinstall_samba_workgroup }}
+	security = user
+	guest account = nobody
+	map to guest = bad user
+	client min protocol = NT1
+	server min protocol = NT1
+	server string = {{ altinstall_samba_server_string }}
+	log file = /var/log/samba/samba.log
+	max log size = 1024
+	load printers = no
+
+[dist]
+	path = {{ altinstall_root_dir }}/dist
+	read only = yes
+	guest ok = yes
+
+[tftp]
+	path = {{ altinstall_root_dir }}/tftp
+	read only = yes
+	guest ok = yes

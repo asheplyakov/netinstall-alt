@@ -1,0 +1,68 @@
+---
+
+local_alt_mirror: /srv/export/dist/altlinux
+local_dist_mirror: /srv/export/dist
+
+alt_images:
+
+  - name: Simply Linux 9.1 x86_64
+    url: https://mirror.yandex.ru/altlinux/images/p9/simply/x86_64/slinux-9.1-x86_64.iso
+    checksum:
+      sha256: f0dc82436b8a65f17d11bb93f550e97c4ed27dea8b00b72758232122372da1a5
+      sha1:   9b3c0433325130ab738d5db0042f139af073a7d8
+    altinst_size: 451227648
+    live_size: 1726971904
+    grub_arch: x86_64
+    alt_arch: x86_64
+    kernel: /EFI/BOOT/vmlinuz
+    initrd: /EFI/BOOT/full.cz
+
+  - name: ALT Workstation 9.1 x86_64
+    url: https://mirror.yandex.ru/altlinux/images/p9/workstation/x86_64/alt-workstation-9.1-x86_64.iso
+    checksum:
+      sha1: b5bf13837215a4b1dec1bb73bd5bf921f36817d8
+      sha256: 2d7e800961c7fcb2791de69b9459c05733b8c36e10171e2274f6a2a64dbf2cb0
+    altinst_size: 349286400
+    live_size: 1351471104
+    grub_arch: x86_64
+    alt_arch: x86_64
+    kernel: /EFI/BOOT/vmlinuz
+    initrd: /EFI/BOOT/full.cz
+
+  - name: ALT Server 9.1 x86_64
+    url: https://mirror.yandex.ru/altlinux/p9/images/server/x86_64/alt-server-9.1-x86_64.iso
+    checksum:
+      sha1: b72c50351d2286d1673faaf7225efee8fee3ac74
+      sha256: b08db3a9662ecfd61e8424b09ced152b22a9816207b1eb05a55cb26b416057f7
+    grub_arch: x86_64
+    alt_arch: x86_64
+    kernel: /EFI/BOOT/vmlinuz
+    initrd: /EFI/BOOT/full.cz
+    variants:
+      - install
+    altinst_size: 356257792
+    live_size: 356257792
+
+  - name: Simply Linux 9.1 aarch64
+    url: https://mirror.yandex.ru/altlinux/images/p9/simply/aarch64/slinux-9.1-aarch64.iso
+    checksum:
+      sha256: cc09bb437a007484465833080161c247e4a8a1e411bf66094cf3f127024b6f4a
+      sha1:   2cd4627aab173e7905dd1a47b1f954d5d8e5e9ad
+    grub_arch: arm64
+    alt_arch: aarch64
+    altinst_size: 411762688
+    live_size: 1411964928
+    kernel: /EFI/BOOT/vmlinuz
+    initrd: /EFI/BOOT/full.cz
+
+  - name: ALT Workstation 9.1 aarch64
+    url: https://mirror.yandex.ru/altlinux/p9/images/workstation/aarch64/alt-workstation-9.1-aarch64.iso
+    checksum:
+      sha256: 829533144d4bc40a3c3e92c547cee6eb73c52f6b2df43d151810fd7f93800767
+      sha1: edc37ef820c93c236735137b567d3489c7cef5e3
+    grub_arch: arm64
+    alt_arch: aarch64
+    kernel: /EFI/BOOT/vmlinuz
+    initrd: /EFI/BOOT/full.cz
+    altinst_size: 316768256
+    live_size: 1225453568

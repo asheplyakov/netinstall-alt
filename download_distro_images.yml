@@ -1,0 +1,43 @@
+---
+
+- hosts:
+    - localhost
+  tasks:
+    - name: ensure local mirror directory exists
+      file:
+        path: "{{ local_dist_mirror }}/altlinux"
+        state: directory
+        mode: 0755
+    - name: ensure local directories exist
+      file:
+        path: "{{ local_dist_mirror }}/{{ item.distro|default('altlinux') }}"
+        state: directory
+        mode: 0755
+      loop: "{{ other_images|default([]) }}"
+
+    - name: download ALT Linux ISO
+      get_url:
+        dest: "{{ local_dist_mirror }}/altlinux/{{ item.url|basename }}"
+        url: "{{ item.url }}"
+        checksum: "sha256:{{ item.checksum.sha256 }}"
+      async: 3600
+      poll: 0
+      loop: "{{ alt_images }}"
+      register: async_results
+
+    - name: wait for download to complete
+      async_status:
+        jid: "{{ async_result_item.ansible_job_id }}"
+      loop: "{{ async_results.results }}"
+      loop_control:
+        loop_var: "async_result_item"
+        label: "{{ async_result_item.item.url }}"
+      register: async_poll_results
+      until: async_poll_results.finished
+      retries: 60
+      delay: 60
+
+
+  vars_files:
+    - alt_images.yml
+  gather_facts: no

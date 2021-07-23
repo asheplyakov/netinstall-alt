@@ -1,0 +1,5 @@
+[altlinux]
+fuxup-i5 ansible_host=asheplyakov-i5.local ansible_user=root
+
+[altinstall]
+asheplyakov-i5.local

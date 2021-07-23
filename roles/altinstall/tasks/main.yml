@@ -1,0 +1,338 @@
+---
+
+- name: figure out remote user
+  command: whoami
+  register: remote_user_out
+  changed_when: False
+
+- name: disable privileged operations in containers
+  set_fact:
+    altinstall_loop_mount: false
+    altinstall_chown: false
+  when:
+    - altinstall_loop_mount is undefined
+    - ansible_virtualization_role|default('unknown') == 'guest'
+    - ansible_virtualization_type|default('unknown') == 'lxc'
+
+- set_fact:
+    altinstall_owner: "{{ remote_user_out.stdout }}"
+  when:
+    - ansible_virtualization_type|default('unknown') != 'lxc'
+
+- name: figure out interface for proxy DHCP
+  set_fact:
+    altinstall_dhcp_interface: "{{ ansible_default_ipv4.interface }}"
+  when:
+    - altinstall_dhcp_interface is undefined
+
+- name: figure out IPv4 address for proxy DHCP
+  set_fact:
+    altinstall_dhcp_address: "{{ ansible_facts[altinstall_dhcp_interface].ipv4.address }}"
+  when: 
+    - altinstall_dhcp_address is undefined
+
+- name: figure out if samba should be deployed
+  set_fact:
+    altinstall_cifs_share: "//{{ altinstall_dhcp_address }}/dist"
+    deploy_samba: true
+  when:
+    - altinstall_cifs_share is undefined
+
+- name: figure out HTTP URL to serve ISOs
+  set_fact:
+    altinstall_http_server: "{{ altinstall_dhcp_address }}"
+  when:
+    - altinstall_http_server is undefined
+
+
+- name: create altinstall root directory
+  file:
+    path: "{{ altinstall_root_dir }}"
+    owner: "{{ altinstall_owner|default(omit) }}"
+    state: directory
+    mode: 0775
+  become: true
+
+- name: create local mirror directory
+  file:
+    path: "{{ altinstall_root_dir }}/dist"
+    owner: "{{ altinstall_owner|default(omit) }}"
+    mode: 0775
+    state: directory
+  become: true
+
+
+- name: create tftp directory
+  file:
+    path: "{{ altinstall_root_dir }}/tftp"
+    owner: "{{ altinstall_owner|default(omit) }}"
+    state: directory
+    mode:  0775
+  become: true
+
+- name: create tftp symlink 
+  file:
+    path: "{{ altinstall_root_dir }}/tftp/tftp"
+    owner: "{{ altinstall_owner|default(omit) }}"
+    state: link
+    src: "."
+  become: true
+
+- name: ensure ISO loop mount/unpack points exist
+  file:
+    path: "{{ altinstall_root_dir }}/tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}"
+    state: directory
+  become: true
+  loop: "{{ alt_images }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: ensure ISO content directories have right owner/permissions
+  shell: >
+    find {{ altinstall_root_dir }}/tftp/netboot -type d -not -user {{ altinstall_owner }} -print0 | 
+    xargs -r -0 chown {{ remote_user_out.stdout }}
+  when: 
+    - not(altinstall_loop_mount|default('true')|bool)
+    - altinstall_chown|default('true')|bool 
+  become: true
+
+- name: ensure ISO content directories are writable
+  shell: >
+    find {{ altinstall_root_dir }}/tftp/netboot -type d -perm 555 -print0 | xargs -r -0 chmod 775
+  when: not(altinstall_loop_mount|default('true')|bool)
+
+- name: install bsdtar on ALT Linux
+  package: name=bsdtar state=present
+  when:
+    - not(altinstall_loop_mount|default('true')|bool)
+    - ansible_os_family == 'Altlinux' or ansible_distribution_file_path == '/etc/altlinux-release'
+  become: true
+
+- name: install bsdtar on Debian
+  package: name=libarchive-tools state=present
+  when:
+    - not(altinstall_loop_mount|default('true')|bool)
+    - ansible_os_family == 'Debian'
+  become: true
+
+- name: create iPXE config files
+  template:
+    src: ./templates/config.ipxe.j2
+    dest: "{{ altinstall_root_dir }}/tftp/config-{{ target_cpu }}.ipxe"
+    mode: 0644
+  loop:
+    - x86_64
+    - aarch64
+  loop_control:
+    loop_var: target_cpu
+  become: true
+
+- set_fact:
+    ipxe_package: ipxe-bootimgs
+  when: ansible_os_family != 'Debian'
+- set_fact:
+    ipxe_package: ipxe
+  when: ansible_os_family == 'Debian'
+
+- name: install iPXE boot roms package
+  package: name={{ ipxe_package }} state=present
+  become: true
+
+- name: deploy iPXE UEFI chainloader on Debian
+  copy:
+    src: /usr/lib/ipxe/snponly.efi
+    dest: "{{ altinstall_root_dir }}/tftp/snponly-x86_64.efi"
+    mode: 0644
+    remote_src: yes
+  when: ansible_os_family == 'Debian'
+  become: true
+
+- name: deploy iPXE BIOS chainloader on Debian
+  copy:
+    src: /usr/lib/ipxe/undionly.kpxe
+    dest: "{{ altinstall_root_dir }}/tftp/undionly.kpxe"
+    remote_src: yes
+    mode: 0644
+  when: ansible_os_family == 'Debian'
+  become: true
+
+# XXX: change src to snponly-x86_64.efi
+- name: deploy iPXE UEFI chainloader on ALT Linux
+  copy:
+    src: /usr/share/ipxe/ipxe-x86_64.efi
+    dest: "{{ altinstall_root_dir }}/tftp/snponly-x86_64.efi"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0644
+  when: ansible_os_family == 'Altlinux' or ansible_distribution_file_path == '/etc/altlinux-release'
+  become: true
+ 
+- name: deploy iPXE UEFI chainloader on Fedora
+  copy:
+    src: /usr/share/ipxe/ipxe-x86_64.efi
+    dest: "{{ altinstall_root_dir }}/tftp/snponly-x86_64.efi"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0644
+  when: ansible_os_family == 'RedHat'
+  become: true
+
+- name: deploy iPXE BIOS chainloader on ALT Linux/Fedora
+  copy:
+    src: /usr/share/ipxe/undionly.kpxe
+    dest: "{{ altinstall_root_dir }}/tftp/undionly.kpxe"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0644
+  when:
+    ansible_os_family != 'Debian'
+  become: true
+
+- name: install nginx
+  package: name=nginx state=present
+  notify:
+    - kick systemd
+  become: true
+
+- name: install dnsmasq
+  package: name=dnsmasq state=present
+  notify:
+    - kick systemd
+  become: true
+
+- set_fact:
+    altinstall_dnsmasq_user: _dnsmasq
+    altinstall_dnsmasq_group: _dnsmasq
+  when: ansible_os_family == 'Altlinux' or ansible_distribution_file_path == '/etc/altlinux-release'
+
+
+- name: install dnsmasq unit file
+  copy:
+    src: files/dnsmasq-altinstall.service
+    dest: /etc/systemd/system/dnsmasq-altinstall.service
+    owner: root
+    group: root
+    mode: 644
+  notify:
+    - kick systemd
+  become: true
+
+- name: run notified handlers
+  meta: flush_handlers
+
+# ansible fails to detect ALT Linux properly
+- set_fact:
+    nginx_sites_enabled_dir: /etc/nginx/sites-enabled.d
+
+- set_fact:
+    nginx_sites_enabled_dir: /etc/nginx/sites-enabled
+  when: ansible_os_family == 'Debian'
+
+- set_fact:
+    nginx_sites_enabled_dir: /etc/nginx/sites-enabled.d
+  when: ansible_os_family == 'Altlinux' or ansible_distribution_file_path == '/etc/altlinux-release'
+
+- set_fact:
+    nginx_sites_enabled_dir: /etc/nginx/default.d
+  when: ansible_os_family == 'RedHat'
+
+- name: create nginx config
+  template:
+    src: ./templates/nginx.conf.j2
+    dest: "{{ nginx_sites_enabled_dir }}/altinstall.conf"
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart nginx
+  become: true
+
+- name: purge default nginx site config
+  file:
+    path: "{{ nginx_sites_enabled_dir }}/default"
+    state: absent
+  notify:
+    - restart nginx
+  become: true
+
+- name: enable and start nginx
+  service:
+    name: nginx
+    enabled: true
+    state: started
+  become: true
+
+- name: install dnsmasq configuration
+  template:
+    src: ./templates/dnsmasq-altinstall.conf.j2
+    dest: /etc/dnsmasq-altinstall.conf
+    owner: root
+    group: root
+    mode: 644
+  notify:
+    - restart dnsmasq
+  become: true
+
+- name: enable and start dnsmasq
+  service:
+    name: dnsmasq-altinstall
+    enabled: true
+    state: started
+  become: true
+
+
+- include: samba.yml
+
+- name: install rsync
+  package: name=rsync state=present
+  become: true
+
+- name: copy ISOs to target
+  synchronize:
+    dest: "{{ altinstall_root_dir }}/dist/{{ item.url|basename }}"
+    src: "{{ local_alt_mirror }}/{{ item.url|basename }}"
+    checksum: yes
+    archive: no
+    times: yes
+  when: not(altinstall_download_isos|default('false')|bool)
+  loop: "{{ alt_images }}"
+
+- name: download ISO images
+  get_url:
+    dest: "{{ altinstall_root_dir }}/dist/{{ item.url|basename }}"
+    url: "{{ item.url }}"
+    checksum: "sha256:{{ item.checksum.sha256 }}"
+  when: altinstall_download_isos|default('false')|bool
+  loop: "{{ alt_images }}"
+
+- name: loop mount ISOs
+  mount:
+    path: "{{ altinstall_root_dir }}/tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}"
+    src: "{{ altinstall_root_dir }}/dist/{{ item.url|basename }}"
+    fstype: iso9660
+    opts: loop,ro,nodev,nosuid
+    state: mounted
+  when: altinstall_loop_mount|default('true')|bool
+  loop: "{{ alt_images }}"
+  become: true
+
+- name: ensure ISO content directories are writable
+  shell: >
+    find {{ altinstall_root_dir }}/tftp/netboot -type d -perm 555 -print0 | xargs -r -0 chmod 775
+  when: not(altinstall_loop_mount|default('true')|bool)
+
+- name: unpack ISOs
+  command: >
+    bsdtar -x -f {{ altinstall_root_dir }}/dist/{{ item.url|basename }} -C {{ altinstall_root_dir }}/tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}
+  when: not(altinstall_loop_mount|default('true')|bool)
+  loop: "{{ alt_images }}"
+  loop_control:
+    label: "{{ item.name }}/{{ item.alt_arch }}"
+
+- name: ensure ISO content directories are writable again
+  shell: >
+    find {{ altinstall_root_dir }}/tftp/netboot -type d -perm 555 -print0 | xargs -r -0 chmod 775
+  when: not(altinstall_loop_mount|default('true')|bool)

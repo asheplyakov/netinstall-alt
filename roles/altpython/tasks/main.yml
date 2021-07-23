@@ -1,0 +1,83 @@
+---
+
+# installs python2.7 (with stdlib) on ALT Linux so the node
+# can be managed with normal ansible roles
+
+- name: check if python binary is available
+  raw: python2 -c 'import sys; sys.exit(0)'
+  register: python2_result
+  failed_when: False
+  changed_when: False
+
+- name: check if python base64 module is available
+  raw: python2 -c 'import sys; import base64; sys.exit(0)'
+  register: python2_base64_result
+  failed_when: False
+  changed_when: False
+
+- name: check if python json module is available
+  raw: python2 -c 'import sys; import json; sys.exit(0)'
+  register: python2_json_result
+  failed_when: False
+  changed_when: False
+
+- name: check if python logging module is available
+  raw: python2 -c 'import sys; import logging; sys.exit(0)'
+  register: python2_logging_result
+  failed_when: False
+  changed_when: False
+
+- name: check if python distutils module is available
+  raw: python2 -c 'import sys; import distutils; sys.exit(0)'
+  register: python2_distutils_result
+  failed_when: False
+  changed_when: False
+
+- set_fact:
+    python_looks_ok: true
+  when:
+    - python2_result.rc == 0
+    - python2_base64_result.rc == 0
+    - python2_json_result.rc == 0
+    - python2_logging_result.rc == 0
+    - python2_distutils_result.rc == 0
+
+- name: check if APT package list cache exists
+  raw: apt-cache show {{ item }}
+  failed_when: False
+  changed_when: False
+  loop:
+    - python-base
+    - python-modules
+    - python-modules-json
+    - python-modules-logging
+    - python-modules-distutils
+  register: apt_cache_result
+  when:
+    - python_looks_ok is undefined
+
+- name: update APT package lists
+  raw: apt-get update
+  when:
+    - python_looks_ok is undefined
+    - apt_cache_result.results | map(attribute='rc') | sum != 0
+
+- name: install python
+  raw: apt-get install -y python-base
+  when: python2_result.rc != 0
+
+- name: install most of python stdlib
+  raw: apt-get install -y python-modules
+  when: python2_base64_result.rc != 0
+
+- name: install python json
+  raw: apt-get install -y python-modules-json
+  when: python2_json_result.rc != 0
+
+- name: install python logging
+  raw: apt-get install -y python-modules-logging
+  when: python2_logging_result.rc != 0
+
+- name: install python distutils
+  raw: apt-get install -y python-modules-distutils
+  when: python2_distutils_result.rc != 0

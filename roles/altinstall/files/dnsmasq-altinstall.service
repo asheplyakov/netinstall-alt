@@ -1,0 +1,13 @@
+[Unit]
+Description=Network install (PXE) proxy DHCP+TFTP server
+Documentation=man:dnsmasq(8)
+After=network.target
+ConditionPathExists=/etc/dnsmasq-altinstall.conf
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/dnsmasq -k -C /etc/dnsmasq-altinstall.conf 
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

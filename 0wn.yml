@@ -1,0 +1,12 @@
+---
+
+- hosts:
+    - altlinux
+  roles:
+    - altpython
+  gather_facts: no
+
+- hosts:
+    - altlinux
+  roles:
+    - 0wn

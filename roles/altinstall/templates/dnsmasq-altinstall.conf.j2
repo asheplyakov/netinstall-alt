@@ -1,0 +1,40 @@
+# PXE proxy-DHCP mode. Another DHCP server on the network
+# is responsible for allocating IP addresses, and this dnsmasq only
+# 1) provides network boot information
+# 2) serves boot files via TFTP
+
+interface={{ altinstall_dhcp_interface }}
+
+# Disable DNS services
+port=0
+
+# therefore don't bother to read /etc/resolv.conf
+no-resolv
+# same for /etc/hosts
+no-hosts
+
+user={{ altinstall_dnsmasq_user|default('dnsmasq') }}
+group={{ altinstall_dnsmasq_group|default('nogroup') }}
+
+dhcp-range={{ altinstall_dhcp_address }},proxy
+
+enable-tftp
+tftp-root={{ altinstall_root_dir }}/tftp
+
+# Distinguish between firmware downloading iPXE and iPXE downloading config
+dhcp-userclass=set:ipxe,iPXE
+
+# ARM64 UEFI firmware should boot iPXE (aarch64/snponly.efi)
+pxe-service=tag:!ipxe,ARM64_EFI,"Network Boot",snponly-aarch64.efi
+# iPXE booted by ARM64 UEFI should "run" this config
+pxe-service=tag:ipxe,ARM64_EFI,"iPXE boot menu",config-aarch64.ipxe
+
+# x86_64 UEFI firmware should boot iPXE (x86_64/snponly.efi)
+pxe-service=tag:!ipxe,X86-64_EFI,"Network Boot",snponly-x86_64.efi
+# iPXE booted by x86_64 UEFI should "run" this config
+pxe-service=tag:ipxe,X86-64_EFI,"iPXE boot menu",config-x86_64.ipxe
+
+# x86 BIOS PXE firmware should boot iPXE (x86_64/undionly.kpxe)
+pxe-service=tag:!ipxe,x86PC,"Network Boot",undionly.kpxe
+# iPXE booted by x86 BIOS PXE should "run" this config
+pxe-service=tag:ipxe,x86PC,"iPXE boot menu",config-x86_64.ipxe

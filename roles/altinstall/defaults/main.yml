@@ -1,0 +1,9 @@
+---
+
+altinstall_root_dir: /srv/export
+# must be subdirectory of
+local_alt_mirror: /srv/export/dist/altlinux
+
+altinstall_samba_workgroup: ALTINSTALL
+altinstall_samba_server_string: ALT Linux network boot
+altinstall_samba_interface: eth0

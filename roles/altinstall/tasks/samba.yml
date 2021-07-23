@@ -1,0 +1,28 @@
+---
+
+- name: install samba
+  package: name=samba state=present
+  notify:
+    - kick systemd
+  become: true
+
+- name: run notified handlers
+  meta: flush_handlers
+
+- name: configure samba file server
+  template:
+    src: ./templates/smb.conf.j2
+    dest: /etc/samba/smb.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart samba
+  become: true
+
+- name: enable and start samba file server
+  service:
+    name: smb
+    enabled: true
+    state: started
+  become: true

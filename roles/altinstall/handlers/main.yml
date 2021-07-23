@@ -1,0 +1,23 @@
+---
+
+- name: kick systemd
+  command: systemctl daemon-reload
+  become: true
+
+- name: restart nginx
+  service:
+    name: nginx
+    state: restarted
+  become: true
+
+- name: restart dnsmasq
+  service:
+    name: dnsmasq-altinstall
+    state: restarted
+  become: true
+
+- name: restart samba
+  service:
+    name: smb
+    state: restarted
+  become: true

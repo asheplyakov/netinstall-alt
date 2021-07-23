@@ -1,0 +1,59 @@
+#!ipxe
+
+:start
+
+set server {{ altinstall_http_server }}
+{% if altinstall_ipxe_download_method|default('http') == 'http' %}
+set kernel_url_prefix http://{{ altinstall_http_server }}/
+{% endif %}
+
+menu Boot options
+
+{% for item in alt_images %}
+{% if target_cpu == item.alt_arch %}
+{% if 'livecd' in item.variants|default(['livecd', 'install']) %}
+item {{ item.name|regex_replace(' ', '_')|lower }}-livecd {{ item.name }} LiveCD, via HTTP
+item {{ item.name|regex_replace(' ', '_')|lower }}-livecd-cifs {{ item.name }} LiveCD, via CIFS
+{% endif %}
+item {{ item.name|regex_replace(' ', '_')|lower }}-install  Install {{ item.name }}, via HTTP
+item {{ item.name|regex_replace(' ', '_')|lower }}-install-cifs  Install {{ item.name }}, via CIFS
+{% endif %}
+{% endfor %}
+item shell iPXE shell
+item exit Exit to firmware
+
+{% if target_cpu in altinstall_default_image %}
+choose --default {{ altinstall_default_image[target_cpu]|regex_replace(' ', '_')|lower }}-livecd --timeout 30000 option && goto ${option}
+{% else %}
+choose option && goto ${option}
+{% endif %}
+
+:shell shell
+
+:exit exit
+
+{% for item in alt_images %}
+{% if target_cpu == item.alt_arch %}
+{% if 'livecd' in item.variants|default(['livecd', 'install']) %}
+:{{ item.name|regex_replace(' ', '_')|lower }}-livecd
+kernel ${kernel_url_prefix}tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.kernel }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:http,network:dhcp,server:${server},directory:/tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }} ramdisk_size={{ (item.live_size|float / 1024)|round(0, 'ceil')|int }} stagename=live showopts
+initrd ${kernel_url_prefix}tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.initrd }}
+boot
+
+:{{ item.name|regex_replace(' ', '_')|lower }}-livecd-cifs
+kernel ${kernel_url_prefix}tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.kernel }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:cifs,network:dhcp,server:{{ altinstall_cifs_share|urlsplit('hostname') }},directory:{{ altinstall_cifs_share|urlsplit('path') }}/{{ item.url|basename }} ramdisk_size={{ (item.live_size|float / 1024)|round(0, 'ceil')|int }} stagename=live showopts
+initrd ${kernel_url_prefix}tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.initrd }}
+boot
+{% endif %}
+
+:{{ item.name|regex_replace(' ', '_')|lower }}-install
+kernel ${kernel_url_prefix}tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.kernel }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:http,network:dhcp,server:${server},directory:/tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }} ramdisk_size={{ (item.altinst_size|float / 1024)|round(0, 'ceil')|int }} stagename=altinst showopts
+initrd ${kernel_url_prefix}tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.initrd }}
+boot
+
+:{{ item.name|regex_replace(' ', '_')|lower }}-install-cifs
+kernel ${kernel_url_prefix}tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.kernel }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:cifs,network:dhcp,server:{{ altinstall_cifs_share|urlsplit('hostname') }},directory:{{ altinstall_cifs_share|urlsplit('path') }}/{{ item.url|basename }} ramdisk_size={{ (item.altinst_size|float / 1024)|round(0, 'ceil')|int }} stagename=altinst showopts
+initrd ${kernel_url_prefix}tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.initrd }}
+boot
+{% endif %}
+{% endfor %}
