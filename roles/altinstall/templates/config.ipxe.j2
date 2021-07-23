@@ -3,7 +3,10 @@
 :start
 
 set server {{ altinstall_http_server }}
-{% if altinstall_ipxe_download_method|default('http') == 'http' %}
+{% if target_cpu in altinstall_ipxe_use_tftp and altinstall_ipxe_use_tftp[target_cpu]|bool %}
+# Use TFTP on {{ target_cpu }} since HTTP causes problems
+# set kernel_url_prefix http://{{ altinstall_http_server }}/
+{% else %}
 set kernel_url_prefix http://{{ altinstall_http_server }}/
 {% endif %}
 

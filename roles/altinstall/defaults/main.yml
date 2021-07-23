@@ -4,6 +4,11 @@ altinstall_root_dir: /srv/export
 # must be subdirectory of
 local_alt_mirror: /srv/export/dist/altlinux
 
+# XXX: on BE-M1000 kernel fails bring up secondary CPUs
+#      if the kernel image and initramfs have been downloaded via HTTP
+altinstall_ipxe_use_tftp:
+  aarch64: true
+
 altinstall_samba_workgroup: ALTINSTALL
 altinstall_samba_server_string: ALT Linux network boot
 altinstall_samba_interface: eth0
