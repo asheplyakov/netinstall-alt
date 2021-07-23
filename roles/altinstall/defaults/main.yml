@@ -4,6 +4,8 @@ altinstall_root_dir: /srv/export
 # must be subdirectory of
 local_alt_mirror: /srv/export/dist/altlinux
 
+altinstall_dhcp_interface: eth0
+
 # XXX: on BE-M1000 kernel fails bring up secondary CPUs
 #      if the kernel image and initramfs have been downloaded via HTTP
 altinstall_ipxe_use_tftp:

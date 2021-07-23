@@ -6,7 +6,4 @@
     - altinstall
   vars_files:
     - alt_images.yml
-  vars:
-    altinstall_default_image:
-      x86_64: Simply Linux 9.1 x86_64
-    altinstall_dhcp_interface: eth0
+    - settings.yml

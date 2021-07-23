@@ -30,8 +30,8 @@
   $EDITOR hosts
   ```
 * If target machines have several network interfaces, set the
-  `altinstall_dhcp_interface` variable to define where network
-  boot services should be provided
+  `altinstall_dhcp_interface` variable (in the `settings.yml` file)
+  to define where network boot services should be provided
 * List necessary ISO images in `alt_images.yml`
 * (optional) Define which ISO should be booted by default
 * Download ISOs:
