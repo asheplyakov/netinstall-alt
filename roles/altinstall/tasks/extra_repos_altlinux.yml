@@ -1,0 +1,30 @@
+---
+
+- name: ensure apt-repo is installed
+  package: name=apt-repo state=present
+  become: true
+
+- name: remeber md5 hash of /etc/apt/sources.list
+  command: >
+    md5sum /etc/apt/sources.list
+  register: sources_list_before_md5
+  changed_when: False
+
+- name: add apt tasks
+  command: >
+    apt-repo add {{ item.id }}
+  loop: "{{ altinstall_altlinux_tasks|default([]) }}"
+  loop_control:
+    label: "{{ item.description }}"
+  become: true
+
+- name: compute md5 hash of /etc/apt/sources.list
+  command: md5sum /etc/apt/sources.list
+  register: sources_list_after_md5
+  changed_when: False
+
+- name: update APT cache
+  command: apt-get update
+  become: true
+  when:
+    - sources_list_after_md5.stdout != sources_list_before_md5.stdout

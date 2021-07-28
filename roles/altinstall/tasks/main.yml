@@ -1,5 +1,10 @@
 ---
 
+- name: add extra APT repos on ALT Linux
+  include_tasks: extra_repos_altlinux.yml
+  when:
+    - ansible_os_family == 'Altlinux' or ansible_distribution_file_path == '/etc/altlinux-release'
+
 - name: figure out remote user
   command: whoami
   register: remote_user_out
@@ -164,6 +169,19 @@
     group: root
     mode: 0644
   when: ansible_os_family == 'Altlinux' or ansible_distribution_file_path == '/etc/altlinux-release'
+  become: true
+
+- name: deploy iPXE ARM64 UEFI chainloader on ALT Linux
+  copy:
+    src: /usr/share/ipxe/snponly-arm64.efi
+    dest: "{{ altinstall_root_dir }}/tftp/snponly-aarch64.efi"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0644
+  when:
+    - "'aarch64' in alt_images|map(attribute='alt_arch')|unique"
+    - ansible_os_family == 'Altlinux' or ansible_distribution_file_path == '/etc/altlinux-release'
   become: true
  
 - name: deploy iPXE UEFI chainloader on Fedora

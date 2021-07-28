@@ -5,3 +5,7 @@ altinstall_dhcp_interface: eth0
 altinstall_default_image:
   x86_64: Simply Linux 9.1 x86_64
   aarch64: Simply Linux 9.1 aarch64
+
+altinstall_altlinux_tasks:
+  - description: iPXE for ARM64 UEFI
+    id: 281213
