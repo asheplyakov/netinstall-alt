@@ -1,0 +1,57 @@
+---
+
+- name: check if account exists
+  command: >
+    getent passwd "{{ admin.username }}"
+  register: getent_admin
+  failed_when: False
+  changed_when: False
+
+- name: bail out if getent invocation fails
+  fail:
+    msg: "failed to figure out if {{ admin.username }} account exists"
+  when:
+    - getent_admin.rc != 0
+    - getent_admin.rc != 2
+
+- name: create admin account
+  user:
+    name: "{{ admin.username }}"
+    comment: "{{ admin.name }}"
+    state: present
+    shell: /bin/bash
+    password_lock: yes
+  when:
+    - getent_admin.rc == 2
+
+- name: add admin to the wheel group
+  user:
+    name: "{{ admin.username }}"
+    groups: wheel
+    append: true
+  when:
+    - ansible_distribution_file_path == '/etc/altlinux-release'
+
+- name: enable passwordless sudo for admin
+  copy:
+    dest: "/etc/sudoers.d/{{ admin.username }}"
+    owner: root
+    group: root
+    mode: 0600
+    content: "{{ admin.username }} ALL=(ALL) NOPASSWD: ALL"
+
+- name: configure ssh authentication by keys
+  authorized_key:
+    user: "{{ admin.username }}"
+    key: "{{ item }}"
+    state: present
+  loop: "{{ admin.ssh_public_keys }}"
+
+- name: enable root login by ssh public keys
+  authorized_key:
+    user: root
+    key: "{{ item }}"
+    state: present
+  when:
+    - admin.enable_ssh_as_root|default('false')|bool
+  loop: "{{ admin.ssh_public_keys }}"

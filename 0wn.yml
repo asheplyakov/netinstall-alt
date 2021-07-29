@@ -7,6 +7,8 @@
   gather_facts: no
 
 - hosts:
-    - altlinux
+    - altinstall
   roles:
     - 0wn
+  vars_files:
+    - admins.yml
