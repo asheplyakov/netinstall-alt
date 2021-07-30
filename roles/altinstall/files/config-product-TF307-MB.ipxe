@@ -1,0 +1,5 @@
+#!ipxe
+
+echo loading settings for TF307 board
+set linux_extra_cmdline:string console=ttyS0,115200n8 earlycon=uart8250,mmio32,0x20230000
+

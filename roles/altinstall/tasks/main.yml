@@ -130,6 +130,15 @@
     loop_var: target_cpu
   become: true
 
+- name: deploy extra iPXE scripts
+  copy:
+    src: "{{ item }}"
+    dest: "{{ altinstall_root_dir }}/tftp/{{ item|basename }}"
+    mode: 0644
+  with_fileglob:
+    - "./files/*.ipxe"
+  become: true
+
 - set_fact:
     ipxe_package: ipxe-bootimgs
   when: ansible_os_family != 'Debian'
