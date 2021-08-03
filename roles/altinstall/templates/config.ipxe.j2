@@ -57,11 +57,19 @@ choose option && goto ${option}
 {% if 'livecd' in item.variants|default(['livecd', 'install']) %}
 {% set item_live_ramdisk_size = (item.live_size|float / 1024)|round(0, 'ceil')|int %}
 :{{ item_label_base }}-livecd
+{% for cfg in item.extra_ipxe_conf|default([]) %}
+# {{ cfg.comment }}
+{{ cfg.snippet }}
+{% endfor %}
 kernel {{ item_netboot_url }}{{ item.kernel }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:http,network:dhcp,server:${server},directory:/{{ item_netboot_dir }} ramdisk_size={{ item_live_ramdisk_size }} stagename=live showopts ${linux_extra_cmdline}
 initrd {{ item_netboot_url }}{{ item.initrd }}
 boot
 
 :{{ item_label_base }}-livecd-cifs
+{% for cfg in item.extra_ipxe_conf|default([]) %}
+# {{ cfg.comment }}
+{{ cfg.snippet }}
+{% endfor %}
 kernel {{ item_netboot_url }}{{ item.kernel }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:cifs,network:dhcp,server:{{ altinstall_cifs_share|urlsplit('hostname') }},directory:{{ altinstall_cifs_share|urlsplit('path') }}/{{ item.url|basename }} ramdisk_size={{ item_live_ramdisk_size }} stagename=live showopts ${linux_extra_cmdline}
 initrd {{ item_netboot_url }}/{{ item.initrd }}
 boot
@@ -69,11 +77,19 @@ boot
 
 {% set item_altinst_ramdisk_size = (item.altinst_size|float / 1024)|round(0, 'ceil')|int %}
 :{{ item_label_base }}-install
+{% for cfg in item.extra_ipxe_conf|default([]) %}
+# {{ cfg.comment }}
+{{ cfg.snippet }}
+{% endfor %}
 kernel {{ item_netboot_url }}{{ item.kernel }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:http,network:dhcp,server:${server},directory:/{{ item_netboot_dir }} ramdisk_size={{ item_altinst_ramdisk_size }} stagename=altinst showopts ${linux_extra_cmdline}
 initrd {{ item_netboot_url }}{{ item.initrd }}
 boot
 
 :{{ item_label_base }}-install-cifs
+{% for cfg in item.extra_ipxe_conf|default([]) %}
+# {{ cfg.comment }}
+{{ cfg.snippet }}
+{% endfor %}
 kernel {{ item_netboot_url }}{{ item.kernel }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:cifs,network:dhcp,server:{{ altinstall_cifs_share|urlsplit('hostname') }},directory:{{ altinstall_cifs_share|urlsplit('path') }}/{{ item.url|basename }} ramdisk_size={{ item_altinst_ramdisk_size }} stagename=altinst showopts ${linux_extra_cmdline}
 initrd {{ item_netboot_url }}{{ item.initrd }}
 boot

@@ -50,6 +50,11 @@ alt_images:
       sha1:   2cd4627aab173e7905dd1a47b1f954d5d8e5e9ad
     grub_arch: arm64
     alt_arch: aarch64
+    extra_ipxe_conf:
+      - comment: blacklist panfrost on Baikal-M
+        snippet: iseq ${smbios/product} TF307-MB-S-D && set linux_extra_cmdline:string ${linux_extra_cmdline} modprobe.blacklist=panfrost ||
+      - comment: blacklist panfrost on Baikal-M
+        snippet: iseq ${smbios/product} TF307 && set linux_extra_cmdline:string ${linux_extra_cmdline} modprobe.blacklist=panfrost ||
     altinst_size: 411762688
     live_size: 1411964928
     kernel: /EFI/BOOT/vmlinuz
@@ -62,6 +67,11 @@ alt_images:
       sha1: edc37ef820c93c236735137b567d3489c7cef5e3
     grub_arch: arm64
     alt_arch: aarch64
+    extra_ipxe_conf:
+      - comment: blacklist panfrost on Baikal-M
+        snippet: iseq ${smbios/product} TF307-MB-S-D && set linux_extra_cmdline:string ${linux_extra_cmdline} modprobe.blacklist=panfrost ||
+      - comment: blacklist panfrost on Baikal-M
+        snippet: iseq ${smbios/product} TF307 && set linux_extra_cmdline:string ${linux_extra_cmdline} modprobe.blacklist=panfrost ||
     kernel: /EFI/BOOT/vmlinuz
     initrd: /EFI/BOOT/full.cz
     altinst_size: 316768256
