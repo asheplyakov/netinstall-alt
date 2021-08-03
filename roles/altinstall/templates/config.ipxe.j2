@@ -17,22 +17,23 @@ isset ${smbios/manufacturer} && chain --autofree config-manufacturer-${smbios/ma
 
 set server {{ altinstall_http_server }}
 {% if target_cpu in altinstall_ipxe_use_tftp and altinstall_ipxe_use_tftp[target_cpu]|bool %}
+{% set kernel_url_prefix = "" %}
 # Use TFTP on {{ target_cpu }} since HTTP causes problems
-# set kernel_url_prefix http://{{ altinstall_http_server }}/
 {% else %}
-set kernel_url_prefix http://{{ altinstall_http_server }}/
+{% set kernel_url_prefix = "http://{{ altinstall_http_server }}/" %}
 {% endif %}
 
 menu Boot options
 
 {% for item in alt_images %}
 {% if target_cpu == item.alt_arch %}
+{% set item_label_base = item.name|regex_replace(' ', '_')|lower %}
 {% if 'livecd' in item.variants|default(['livecd', 'install']) %}
-item {{ item.name|regex_replace(' ', '_')|lower }}-livecd {{ item.name }} LiveCD, via HTTP
-item {{ item.name|regex_replace(' ', '_')|lower }}-livecd-cifs {{ item.name }} LiveCD, via CIFS
+item {{ item_label_base }}-livecd {{ item.name }} LiveCD, via HTTP
+item {{ item_label_base }}-livecd-cifs {{ item.name }} LiveCD, via CIFS
 {% endif %}
-item {{ item.name|regex_replace(' ', '_')|lower }}-install  Install {{ item.name }}, via HTTP
-item {{ item.name|regex_replace(' ', '_')|lower }}-install-cifs  Install {{ item.name }}, via CIFS
+item {{ item_label_base }}-install  Install {{ item.name }}, via HTTP
+item {{ item_label_base }}-install-cifs  Install {{ item.name }}, via CIFS
 {% endif %}
 {% endfor %}
 item shell iPXE shell
@@ -50,26 +51,31 @@ choose option && goto ${option}
 
 {% for item in alt_images %}
 {% if target_cpu == item.alt_arch %}
+{% set item_label_base = item.name|regex_replace(' ', '_')|lower %}
+{% set item_netboot_dir = "tftp/netboot/{0}/{1}".format(item.alt_arch, item_label_base) %}
+{% set item_netboot_url = kernel_url_prefix + item_netboot_dir  %}
 {% if 'livecd' in item.variants|default(['livecd', 'install']) %}
-:{{ item.name|regex_replace(' ', '_')|lower }}-livecd
-kernel ${kernel_url_prefix}tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.kernel }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:http,network:dhcp,server:${server},directory:/tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }} ramdisk_size={{ (item.live_size|float / 1024)|round(0, 'ceil')|int }} stagename=live showopts ${linux_extra_cmdline}
-initrd ${kernel_url_prefix}tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.initrd }}
+{% set item_live_ramdisk_size = (item.live_size|float / 1024)|round(0, 'ceil')|int %}
+:{{ item_label_base }}-livecd
+kernel {{ item_netboot_url }}{{ item.kernel }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:http,network:dhcp,server:${server},directory:/{{ item_netboot_dir }} ramdisk_size={{ item_live_ramdisk_size }} stagename=live showopts ${linux_extra_cmdline}
+initrd {{ item_netboot_url }}{{ item.initrd }}
 boot
 
-:{{ item.name|regex_replace(' ', '_')|lower }}-livecd-cifs
-kernel ${kernel_url_prefix}tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.kernel }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:cifs,network:dhcp,server:{{ altinstall_cifs_share|urlsplit('hostname') }},directory:{{ altinstall_cifs_share|urlsplit('path') }}/{{ item.url|basename }} ramdisk_size={{ (item.live_size|float / 1024)|round(0, 'ceil')|int }} stagename=live showopts ${linux_extra_cmdline}
-initrd ${kernel_url_prefix}tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.initrd }}
+:{{ item_label_base }}-livecd-cifs
+kernel {{ item_netboot_url }}{{ item.kernel }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:cifs,network:dhcp,server:{{ altinstall_cifs_share|urlsplit('hostname') }},directory:{{ altinstall_cifs_share|urlsplit('path') }}/{{ item.url|basename }} ramdisk_size={{ item_live_ramdisk_size }} stagename=live showopts ${linux_extra_cmdline}
+initrd {{ item_netboot_url }}/{{ item.initrd }}
 boot
 {% endif %}
 
-:{{ item.name|regex_replace(' ', '_')|lower }}-install
-kernel ${kernel_url_prefix}tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.kernel }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:http,network:dhcp,server:${server},directory:/tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }} ramdisk_size={{ (item.altinst_size|float / 1024)|round(0, 'ceil')|int }} stagename=altinst showopts ${linux_extra_cmdline}
-initrd ${kernel_url_prefix}tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.initrd }}
+{% set item_altinst_ramdisk_size = (item.altinst_size|float / 1024)|round(0, 'ceil')|int %}
+:{{ item_label_base }}-install
+kernel {{ item_netboot_url }}{{ item.kernel }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:http,network:dhcp,server:${server},directory:/{{ item_netboot_dir }} ramdisk_size={{ item_altinst_ramdisk_size }} stagename=altinst showopts ${linux_extra_cmdline}
+initrd {{ item_netboot_url }}{{ item.initrd }}
 boot
 
-:{{ item.name|regex_replace(' ', '_')|lower }}-install-cifs
-kernel ${kernel_url_prefix}tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.kernel }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:cifs,network:dhcp,server:{{ altinstall_cifs_share|urlsplit('hostname') }},directory:{{ altinstall_cifs_share|urlsplit('path') }}/{{ item.url|basename }} ramdisk_size={{ (item.altinst_size|float / 1024)|round(0, 'ceil')|int }} stagename=altinst showopts ${linux_extra_cmdline}
-initrd ${kernel_url_prefix}tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.initrd }}
+:{{ item_label_base }}-install-cifs
+kernel {{ item_netboot_url }}{{ item.kernel }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:cifs,network:dhcp,server:{{ altinstall_cifs_share|urlsplit('hostname') }},directory:{{ altinstall_cifs_share|urlsplit('path') }}/{{ item.url|basename }} ramdisk_size={{ item_altinst_ramdisk_size }} stagename=altinst showopts ${linux_extra_cmdline}
+initrd {{ item_netboot_url }}{{ item.initrd }}
 boot
 {% endif %}
 {% endfor %}
