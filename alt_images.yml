@@ -76,3 +76,15 @@ alt_images:
     initrd: /EFI/BOOT/full.cz
     altinst_size: 316768256
     live_size: 1225453568
+
+  - name: ALT p9-20210802 jeos aarch64
+    url: http://asheplyakov-rocket/dist/altlinux/alt-p9-jeos-systemd-20210802-aarch64.iso
+    grub_arch: arm64
+    alt_arch: aarch64
+    kernel: /boot/vmlinuz
+    initrd: /boot/full.cz
+    # no LiveCD here
+    variants:
+      - install
+    altinst_size: 8388608
+    live_size: 8388608
