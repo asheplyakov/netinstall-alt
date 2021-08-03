@@ -322,7 +322,9 @@
     checksum: yes
     archive: no
     times: yes
-  when: not(altinstall_download_isos|default('false')|bool)
+  when:
+    - not(altinstall_download_isos|default('false')|bool)
+    - not(item.skip_iso_deploy|default('false')|bool)
   loop: "{{ alt_images }}"
 
 - name: download ISO images
@@ -330,7 +332,9 @@
     dest: "{{ altinstall_root_dir }}/dist/{{ item.url|basename }}"
     url: "{{ item.url }}"
     checksum: "sha256:{{ item.checksum.sha256 }}"
-  when: altinstall_download_isos|default('false')|bool
+  when:
+    - altinstall_download_isos|default('false')|bool
+    - not(item.skip_iso_deploy|default('false')|bool)
   loop: "{{ alt_images }}"
 
 - name: loop mount ISOs
@@ -340,7 +344,9 @@
     fstype: iso9660
     opts: loop,ro,nodev,nosuid
     state: mounted
-  when: altinstall_loop_mount|default('true')|bool
+  when:
+    - altinstall_loop_mount|default('true')|bool
+    - not(item.skip_iso_deploy|default('false')|bool)
   loop: "{{ alt_images }}"
   become: true
 
