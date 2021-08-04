@@ -1,0 +1,42 @@
+
+- name: fail if url is missing
+  fail:
+    msg: "{{ item.name }}: url is undefined"
+  when: item.url is undefined
+
+- name: fail if checksum is missing
+  fail:
+    msg: "{{ item.name }}: checksum is undefined"
+  when: 
+    - not(item.skip_iso_deploy|default('false')|bool)
+    - item.checksum is undefined or item.checksum.sha256 is undefined
+
+- name: check if alt_arch is defined
+  fail:
+    msg: "{{ item.name }}: alt_arch is undefined"
+  when: item.alt_arch is undefined
+
+- name: check if grub_arch is defined
+  fail:
+    msg: "{{ item.name }}: grub_arch is undefined"
+  when: item.grub_arch is undefined
+
+- name: check if kernel is defined
+  fail:
+    msg: "{{ item.name }}: kernel is undefined"
+  when: item.kernel is undefined
+
+- name: check if initrd is defined
+  fail:
+    msg: "{{ item.name }}: initrd is undefined"
+  when: item.initrd is undefined
+
+- name: check if altinst_size is defined
+  fail:
+    msg: "{{ item.name }}: initrd is undefined"
+  when: item.altinst_size is undefined
+
+- name: check if live_size is defined
+  fail:
+    msg: "{{ item.name }}: initrd is undefined"
+  when: item.live_size is undefined

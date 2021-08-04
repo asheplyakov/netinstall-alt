@@ -1,0 +1,22 @@
+---
+
+- name: check if names are defined
+  fail:
+    msg: "name should be defined for each image"
+  when: alt_images|selectattr("name", "undefined")|count != 0
+
+- name: check if names are non-empty
+  fail:
+    msg: "names should non-empty"
+  when: alt_images|selectattr("name", "eq", "")|count != 0
+
+- name: check if names are unique
+  fail:
+    msg: "image names must be unique"
+  when: alt_images|map(attribute='name')|unique|count != alt_images|count
+
+- name: check required properties
+  include_tasks: validate_input_yaml_entry.yml
+  loop: "{{ alt_images }}"
+  loop_control:
+    label: "{{ item.name }}"

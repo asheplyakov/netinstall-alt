@@ -1,5 +1,10 @@
 ---
 
+- name: validate images description
+  import_tasks: validate_input_yaml.yml
+  delegate_to: localhost
+  run_once: true
+
 - name: add extra APT repos on ALT Linux
   include_tasks: extra_repos_altlinux.yml
   when:
