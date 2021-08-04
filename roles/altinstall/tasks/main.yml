@@ -316,16 +316,14 @@
   become: true
 
 - name: copy ISOs to target
-  synchronize:
-    dest: "{{ altinstall_root_dir }}/dist/{{ item.url|basename }}"
-    src: "{{ local_alt_mirror }}/{{ item.url|basename }}"
-    checksum: yes
-    archive: no
-    times: yes
+  vars:
+    current_isos: "{{ current_batch }}"
+  include_tasks: copy_isos.yml
   when:
     - not(altinstall_download_isos|default('false')|bool)
-    - not(item.skip_iso_deploy|default('false')|bool)
-  loop: "{{ alt_images }}"
+  loop: "{{ alt_images|selectattr('skip_iso_deploy', 'undefined')|batch(ansible_processor_vcpus)| list }}"
+  loop_control:
+    loop_var: current_batch
 
 - name: download ISO images
   get_url:

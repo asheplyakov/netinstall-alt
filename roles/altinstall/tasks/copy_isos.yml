@@ -1,0 +1,55 @@
+---
+
+# Copy missing/out of date ISOs to the target node
+# Use available cores to perform checks
+
+- name: check for missing/out of date ISOs
+  stat:
+    path: "{{ altinstall_root_dir }}/dist/{{ item.url|basename }}"
+    get_checksum: yes
+    checksum_algorithm: sha256
+    get_mime: no
+  async: 3600
+  poll: 0
+  loop: "{{ current_isos }}"
+  loop_control:
+    label: "{{ item.url }}"
+  register: async_check_results
+
+- name: wait for outdated/missing ISOs check to complete
+  async_status:
+    jid: "{{ async_result_item.ansible_job_id }}"
+  loop: "{{ async_check_results.results }}"
+  loop_control:
+    loop_var: "async_result_item"
+    label: "{{ async_result_item.item.url }}"
+  register: async_poll_results
+  until: async_poll_results.finished
+  retries: 360
+  delay: 10
+
+- name: copy missing ISOs
+  synchronize:
+    dest: "{{ altinstall_root_dir }}/dist/{{ item.async_result_item.item.url|basename }}"
+    src: "{{ local_alt_mirror }}/{{ item.async_result_item.item.url|basename }}"
+    compress: no
+    archive: no
+    times: yes
+  when:
+    - not(item.stat.exists)
+  loop: "{{ async_poll_results.results }}"
+  loop_control:
+    label: "{{ item.async_result_item.item.url }}"
+
+- name: copy outdated ISOs
+  synchronize:
+    dest: "{{ altinstall_root_dir }}/dist/{{ item.async_result_item.item.url|basename }}"
+    src: "{{ local_alt_mirror }}/{{ item.async_result_item.item.url|basename }}"
+    compress: no
+    archive: no
+    times: yes
+  when:
+    - item.stat.exists and item.stat.checksum|default('') != item.async_result_item.item.checksum.sha256
+  loop: "{{ async_poll_results.results }}"
+  loop_control:
+    label: "{{ item.async_result_item.item.url }}"
