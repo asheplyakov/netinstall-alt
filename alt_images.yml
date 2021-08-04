@@ -79,6 +79,8 @@ alt_images:
 
   - name: ALT p9-20210802 jeos aarch64
     url: http://asheplyakov-rocket/dist/altlinux/alt-p9-jeos-systemd-20210802-aarch64.iso
+    checksum:
+      sha256: b7cddb31f93f6d97c2c9e15294596aca5bfcfcfda6b69be8aeb8f3bd02eca939
     grub_arch: arm64
     alt_arch: aarch64
     kernel: /boot/vmlinuz
