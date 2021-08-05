@@ -32,8 +32,10 @@ menu Boot options
 item {{ item_label_base }}-livecd {{ item.name }} LiveCD, via HTTP
 item {{ item_label_base }}-livecd-cifs {{ item.name }} LiveCD, via CIFS
 {% endif %}
+{% if 'install' in item.variants|default(['livecd', 'install']) %}
 item {{ item_label_base }}-install  Install {{ item.name }}, via HTTP
 item {{ item_label_base }}-install-cifs  Install {{ item.name }}, via CIFS
+{% endif %}
 {% endif %}
 {% endfor %}
 item shell iPXE shell
@@ -93,8 +95,9 @@ boot
 kernel {{ item_kernel_url }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:cifs,network:dhcp,server:{{ altinstall_cifs_share|urlsplit('hostname') }},directory:{{ altinstall_cifs_share|urlsplit('path') }}/{{ item.url|basename }} ramdisk_size={{ item_live_ramdisk_size }} stagename=live showopts ${linux_extra_cmdline}
 initrd {{ item_initrd_url }}
 boot
-{% endif %}
+{% endif %}{# 'livecd' in item.variants #}
 
+{% if 'install' in item.variants|default(['livecd', 'install']) %}
 {% set item_altinst_ramdisk_size = (item.altinst_size|float / 1024)|round(0, 'ceil')|int %}
 :{{ item_label_base }}-install
 {% for cfg in item.extra_ipxe_conf|default([]) %}
@@ -113,5 +116,6 @@ boot
 kernel {{ item_kernel_url }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:cifs,network:dhcp,server:{{ altinstall_cifs_share|urlsplit('hostname') }},directory:{{ altinstall_cifs_share|urlsplit('path') }}/{{ item.url|basename }} ramdisk_size={{ item_altinst_ramdisk_size }} stagename=altinst showopts ${linux_extra_cmdline}
 initrd {{ item_initrd_url }}
 boot
-{% endif %}
+{% endif %} {# "install" in item.variants #}
+{% endif %} {# target_cpu == item.alt_arch #}
 {% endfor %}
