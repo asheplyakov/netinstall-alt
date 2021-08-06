@@ -20,7 +20,7 @@ set server {{ altinstall_http_server }}
 {% set kernel_url_prefix = "" %}
 # Use TFTP on {{ target_cpu }} since HTTP causes problems
 {% else %}
-{% set kernel_url_prefix = "http://{{ altinstall_http_server }}/" %}
+{% set kernel_url_prefix = "http://%s/" % altinstall_http_server %}
 {% endif %}
 
 menu Boot options
