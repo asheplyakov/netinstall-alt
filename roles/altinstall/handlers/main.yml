@@ -21,3 +21,9 @@
     name: smb
     state: restarted
   become: true
+
+- name: restart vsftpd
+  service:
+    name: vsftpd
+    state: restarted
+  become: true

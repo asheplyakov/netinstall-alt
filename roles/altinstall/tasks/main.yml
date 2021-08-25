@@ -316,6 +316,8 @@
 
 - include: samba.yml
 
+- include: ftp.yml
+
 - name: install rsync
   package: name=rsync state=present
   become: true

@@ -1,0 +1,73 @@
+---
+
+- name: install FTP server
+  package: name=vsftpd state=present
+  register: install_vsftpd
+  become: true
+
+- set_fact:
+    vsftpd_conf: /etc/vsftpd/conf
+  when:
+    - ansible_os_family == 'Altlinux' or ansible_distribution_file_path == '/etc/altlinux-release'
+
+- name: install vsftpd unit file
+  copy:
+    src: ./files/vsftpd.service
+    dest: /etc/systemd/system/vsftpd.service
+    owner: root
+    group: root
+    mode: 0644
+  register: install_vsftpd_service
+  notify:
+    - restart vsftpd
+  become: true
+
+# XXX: flush handlers might restart vsftpd, however
+# 1. systemd hasn't been `daemon-reload`ed yet
+# 2. conflicting units hasn't been disabled yet
+# 3. vsftpd config is not ready yet
+- name: kick systemd
+  command: systemd daemon-reload
+  become: true
+  when: install_vsftpd.changed or install_vsftpd_service.changed
+
+- name: disable vsftpd.socket
+  service:
+    name: vsftpd.socket
+    enabled: false
+    state: stopped
+  failed_when: False
+  become: true
+
+- name: create /var/ftp directory on ALT Linux
+  file:
+    dest: /var/ftp
+    state: directory
+  when:
+    - ansible_os_family == 'Altlinux' or ansible_distribution_file_path == '/etc/altlinux-release'
+  become: true
+
+- name: create anonymous only FTP config
+  template:
+    src: ./templates/vsftpd.conf.j2
+    dest: "{{ vsftpd_conf|default('/etc/vsftpd.conf') }}"
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart vsftpd
+  become: true
+
+# XXX: avoid useless start/restart (see below)
+- name: run notified handlers
+  meta: flush_handlers
+
+# XXX: if vsftpd unit and/or config file has changed the handler
+# is going to restart vsftpd just in a second after the start.
+# Use the above `flush_handlers` to avoid it
+- name: enable and start FTP server
+  service:
+    name: vsftpd
+    enabled: true
+    state: started
+  become: true

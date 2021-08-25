@@ -1,0 +1,12 @@
+[Unit]
+Description=vsftpd FTP service
+After=syslog.target network.target
+Conflicts=vsftpd.socket
+
+[Service]
+ExecStartPre=-/bin/mkdir -p -m555 /run/vsftpd/empty
+ExecStart=/usr/sbin/vsftpd
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target
