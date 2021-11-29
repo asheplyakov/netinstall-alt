@@ -36,11 +36,11 @@
     msg: "{{ item.name }}: initrd is undefined"
   when:
     - item.altinst_size is undefined
-    - not(item.http_iso_boot|default('false')|bool)
+    - item.need_ramdisk_size|default('true')|bool
 
 - name: check if live_size is defined
   fail:
     msg: "{{ item.name }}: initrd is undefined"
   when:
     - item.live_size is undefined
-    - not(item.http_iso_boot|default('false')|bool)
+    - item.need_ramdisk_size|default('true')|bool

@@ -78,7 +78,7 @@ choose option && goto ${option}
 {% endif %}
 
 {% if 'livecd' in item.variants|default(['livecd', 'install']) %}
-{% if not(item.http_iso_boot|default('false')|bool) %}
+{% if item.need_ramdisk_size|default('true')|bool %}
 {% set item_live_ramdisk_size = (item.live_size|float / 1024)|round(0, 'ceil')|int %}
 {% endif %}
 
@@ -102,7 +102,7 @@ boot
 {% endif %}{# 'livecd' in item.variants #}
 
 {% if 'install' in item.variants|default(['livecd', 'install']) %}
-{% if not(item.http_iso_boot|default('false')|bool) %}
+{% if item.need_ramdisk_size|default('true')|bool %}
 {% set item_altinst_ramdisk_size = (item.altinst_size|float / 1024)|round(0, 'ceil')|int %}
 {% endif %}
 :{{ item_label_base }}-install
