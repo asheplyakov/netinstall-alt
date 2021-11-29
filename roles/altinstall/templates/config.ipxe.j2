@@ -13,6 +13,8 @@ isset ${smbios/product} && chain --autofree config-product-${smbios/product}.ipx
 # (for virtual machines: manufacturer == QEMU)
 isset ${smbios/manufacturer} && chain --autofree config-manufacturer-${smbios/manufacturer}.ipxe ||
 
+set lang:string en_US
+
 :start
 
 set server {{ altinstall_http_server }}
@@ -40,12 +42,18 @@ item {{ item_label_base }}-install-cifs  Install {{ item.name }}, via CIFS
 {% endfor %}
 item shell iPXE shell
 item exit Exit to firmware
+item --key 0x107e switch_language Switch language [F5] (currently ${lang})
 
 {% if target_cpu in altinstall_default_image %}
 choose --default {{ altinstall_default_image[target_cpu]|regex_replace(' ', '_')|lower }}-livecd --timeout 30000 option && goto ${option}
 {% else %}
 choose option && goto ${option}
 {% endif %}
+
+:switch_language
+iseq ${lang} en_US && set lang ru_RU && goto start ||
+iseq ${lang} ru_RU && set lang en_US && goto start ||
+goto start
 
 :shell shell
 
@@ -87,7 +95,7 @@ choose option && goto ${option}
 # {{ cfg.comment }}
 {{ cfg.snippet }}
 {% endfor %}
-kernel {{ item_kernel_url }} initrd={{ item.initrd|basename }} root=bootchain bootchain=fg,altboot ip=dhcp4 changedisk fastboot live automatic=method:http,network:dhcp,server:{{ item_stage2_http_url|urlsplit('hostname') }},directory:{{ item_stage2_http_url|urlsplit('path') }} ramdisk_size={{ item_live_ramdisk_size|default(omit) }} stagename=live showopts ${linux_extra_cmdline}
+kernel {{ item_kernel_url }} initrd={{ item.initrd|basename }} root=bootchain bootchain=fg,altboot ip=dhcp4 changedisk fastboot live automatic=method:http,network:dhcp,server:{{ item_stage2_http_url|urlsplit('hostname') }},directory:{{ item_stage2_http_url|urlsplit('path') }} ramdisk_size={{ item_live_ramdisk_size|default(omit) }} stagename=live showopts lang=${lang} ${linux_extra_cmdline}
 initrd {{ item_initrd_url }}
 boot
 
@@ -96,7 +104,7 @@ boot
 # {{ cfg.comment }}
 {{ cfg.snippet }}
 {% endfor %}
-kernel {{ item_kernel_url }} initrd={{ item.initrd|basename }} root=bootchain bootchain=fg,altboot ip=dhcp4 changedisk fastboot live automatic=method:cifs,network:dhcp,server:{{ altinstall_cifs_share|urlsplit('hostname') }},directory:{{ altinstall_cifs_share|urlsplit('path') }}/{{ item.url|basename }} ramdisk_size={{ item_live_ramdisk_size|default(omit) }} stagename=live showopts ${linux_extra_cmdline}
+kernel {{ item_kernel_url }} initrd={{ item.initrd|basename }} root=bootchain bootchain=fg,altboot ip=dhcp4 changedisk fastboot live automatic=method:cifs,network:dhcp,server:{{ altinstall_cifs_share|urlsplit('hostname') }},directory:{{ altinstall_cifs_share|urlsplit('path') }}/{{ item.url|basename }} ramdisk_size={{ item_live_ramdisk_size|default(omit) }} stagename=live showopts lang=${lang} ${linux_extra_cmdline}
 initrd {{ item_initrd_url }}
 boot
 {% endif %}{# 'livecd' in item.variants #}
@@ -110,7 +118,7 @@ boot
 # {{ cfg.comment }}
 {{ cfg.snippet }}
 {% endfor %}
-kernel {{ item_kernel_url }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:http,network:dhcp,server:{{ item_stage2_http_url|urlsplit('hostname') }},directory:{{ item_stage2_http_url|urlsplit('path') }} ramdisk_size={{ item_altinst_ramdisk_size }} stagename=altinst showopts ${linux_extra_cmdline}
+kernel {{ item_kernel_url }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:http,network:dhcp,server:{{ item_stage2_http_url|urlsplit('hostname') }},directory:{{ item_stage2_http_url|urlsplit('path') }} ramdisk_size={{ item_altinst_ramdisk_size }} stagename=altinst showopts lang=${lang} ${linux_extra_cmdline}
 initrd {{ item_initrd_url }}
 boot
 
@@ -119,7 +127,7 @@ boot
 # {{ cfg.comment }}
 {{ cfg.snippet }}
 {% endfor %}
-kernel {{ item_kernel_url }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:cifs,network:dhcp,server:{{ altinstall_cifs_share|urlsplit('hostname') }},directory:{{ altinstall_cifs_share|urlsplit('path') }}/{{ item.url|basename }} ramdisk_size={{ item_altinst_ramdisk_size }} stagename=altinst showopts ${linux_extra_cmdline}
+kernel {{ item_kernel_url }} initrd={{ item.initrd|basename }} changedisk fastboot live automatic=method:cifs,network:dhcp,server:{{ altinstall_cifs_share|urlsplit('hostname') }},directory:{{ altinstall_cifs_share|urlsplit('path') }}/{{ item.url|basename }} ramdisk_size={{ item_altinst_ramdisk_size }} stagename=altinst showopts lang=${lang} ${linux_extra_cmdline}
 initrd {{ item_initrd_url }}
 boot
 {% endif %} {# "install" in item.variants #}
