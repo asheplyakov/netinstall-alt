@@ -38,7 +38,7 @@ alt_images:
     live_size: 1157017600
     altinst_size: 1157017600
     variants:
-      - live
+      - livecd
 
   - name: ALT p10 mate 20210912 aarch64
     url: http://nightly.altlinux.org/p10-aarch64/release/alt-p10-mate-20210912-aarch64.iso
@@ -51,4 +51,4 @@ alt_images:
     live_size: 1033277440
     altinst_size: 1033277440
     variants:
-      - live
+      - livecd
