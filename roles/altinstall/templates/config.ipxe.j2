@@ -40,9 +40,9 @@ item {{ item_label_base }}-install-cifs  Install {{ item.name }}, via CIFS
 {% endif %}
 {% endif %}
 {% endfor %}
-item shell iPXE shell
-item exit Exit to firmware
 item --key 0x107e switch_language Switch language [F5] (currently ${lang})
+item --key 0x187e shell iPXE shell [F11]
+item --key 0x197e exit Exit to firmware [F12]
 
 {% if target_cpu in altinstall_default_image %}
 choose --default {{ altinstall_default_image[target_cpu]|regex_replace(' ', '_')|lower }}-livecd --timeout 30000 option && goto ${option}
