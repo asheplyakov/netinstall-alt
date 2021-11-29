@@ -23,6 +23,11 @@ tftp-root={{ altinstall_root_dir }}/tftp
 
 # Distinguish between firmware downloading iPXE and iPXE downloading config
 dhcp-userclass=set:ipxe,iPXE
+# Raspberry pi
+dhcp-vendorclass=set:rpi,"Arch:00000:UNDI:002001"
+
+# Raspberry pi (via GPU)
+pxe-service=tag:rpi,0,"Raspberry Pi Boot"
 
 # ARM64 UEFI firmware should boot iPXE (aarch64/snponly.efi)
 pxe-service=tag:!ipxe,ARM64_EFI,"Network Boot",snponly-aarch64.efi
@@ -38,3 +43,7 @@ pxe-service=tag:ipxe,X86-64_EFI,"iPXE boot menu",config-x86_64.ipxe
 pxe-service=tag:!ipxe,x86PC,"Network Boot",undionly.kpxe
 # iPXE booted by x86 BIOS PXE should "run" this config
 pxe-service=tag:ipxe,x86PC,"iPXE boot menu",config-x86_64.ipxe
+
+
+# rpi3
+pxe-service=tag:rpi3,0,"Network Boot",bootcode.bin
