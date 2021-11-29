@@ -34,9 +34,13 @@
 - name: check if altinst_size is defined
   fail:
     msg: "{{ item.name }}: initrd is undefined"
-  when: item.altinst_size is undefined
+  when:
+    - item.altinst_size is undefined
+    - not(item.http_iso_boot|default('false')|bool)
 
 - name: check if live_size is defined
   fail:
     msg: "{{ item.name }}: initrd is undefined"
-  when: item.live_size is undefined
+  when:
+    - item.live_size is undefined
+    - not(item.http_iso_boot|default('false')|bool)

@@ -15,15 +15,6 @@
   register: remote_user_out
   changed_when: False
 
-- name: disable privileged operations in containers
-  set_fact:
-    altinstall_loop_mount: false
-    altinstall_chown: false
-  when:
-    - altinstall_loop_mount is undefined
-    - ansible_virtualization_role|default('unknown') == 'guest'
-    - ansible_virtualization_type|default('unknown') == 'lxc'
-
 - set_fact:
     altinstall_owner: "{{ remote_user_out.stdout }}"
   when:
@@ -51,6 +42,7 @@
 - name: figure out HTTP URL to serve ISOs
   set_fact:
     altinstall_http_server: "{{ altinstall_dhcp_address }}"
+    altinstall_http_dist: "http://{{ altinstall_dhcp_address }}/dist"
   when:
     - altinstall_http_server is undefined
 
@@ -90,39 +82,27 @@
 
 - name: ensure ISO loop mount/unpack points exist
   file:
-    path: "{{ altinstall_root_dir }}/tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}"
+    path: "{{ altinstall_root_dir }}/tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.kernel|dirname }}"
     state: directory
   become: true
   loop: "{{ alt_images }}"
   loop_control:
     label: "{{ item.name }}"
 
-- name: ensure ISO content directories have right owner/permissions
+- name: ensure netboot directories are writable
   shell: >
-    find {{ altinstall_root_dir }}/tftp/netboot -type d -not -user {{ altinstall_owner }} -print0 | 
-    xargs -r -0 chown {{ remote_user_out.stdout }}
-  when: 
-    - not(altinstall_loop_mount|default('true')|bool)
-    - altinstall_chown|default('true')|bool 
+    find {{ altinstall_root_dir }}/tftp/netboot -xdev -type d -perm 555 -print0 | 
+    while read -d '' dir; do if ! mountpoint -q "$dir"; then chmod 755 "$dir"; fi;  done
+  args:
+    executable: /bin/bash
   become: true
 
-- name: ensure ISO content directories are writable
+- name: ensure netboot directories have correct owner/permissions
   shell: >
-    find {{ altinstall_root_dir }}/tftp/netboot -type d -perm 555 -print0 | xargs -r -0 chmod 775
-  when: not(altinstall_loop_mount|default('true')|bool)
-
-- name: install bsdtar on ALT Linux
-  package: name=bsdtar state=present
-  when:
-    - not(altinstall_loop_mount|default('true')|bool)
-    - ansible_os_family == 'Altlinux' or ansible_distribution_file_path == '/etc/altlinux-release'
-  become: true
-
-- name: install bsdtar on Debian
-  package: name=libarchive-tools state=present
-  when:
-    - not(altinstall_loop_mount|default('true')|bool)
-    - ansible_os_family == 'Debian'
+    find {{ altinstall_root_dir }}/tftp/netboot -xdev -type d -not -user {{ altinstall_owner }} -print0 | 
+    while read -d '' dir; do if ! mountpoint -q "$dir"; then chown {{ altinstall_owner }} "$dir"; fi;  done
+  args:
+    executable: /bin/bash
   become: true
 
 - name: create iPXE config files
@@ -318,9 +298,13 @@
 
 - include: ftp.yml
 
-- name: install rsync
-  package: name=rsync state=present
+- name: install rsync and xorriso
+  package: name={{ item }} state=present
+  with_items:
+    - rsync
+    - xorriso
   become: true
+
 
 - name: copy ISOs to target
   vars:
@@ -342,6 +326,16 @@
     - not(item.skip_iso_deploy|default('false')|bool)
   loop: "{{ alt_images }}"
 
+- name: extract kernels and initramfs
+  command: >
+    xorriso -indev stdio:{{ altinstall_root_dir }}/dist/{{ item.url|basename }} -osirrox on 
+    -cpax {{ item.kernel }} {{ item.initrd }} 
+    "{{ altinstall_root_dir }}/tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}{{ item.kernel|dirname }}"
+  when:
+    - not(item.skip_iso_deploy|default('false')|bool)
+    - item.http_iso_boot|default('false')|bool
+  loop: "{{ alt_images }}"
+
 - name: loop mount ISOs
   mount:
     path: "{{ altinstall_root_dir }}/tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}"
@@ -350,25 +344,7 @@
     opts: loop,ro,nodev,nosuid
     state: mounted
   when:
-    - altinstall_loop_mount|default('true')|bool
     - not(item.skip_iso_deploy|default('false')|bool)
+    - not(item.http_iso_boot|default('false')|bool)
   loop: "{{ alt_images }}"
   become: true
-
-- name: ensure ISO content directories are writable
-  shell: >
-    find {{ altinstall_root_dir }}/tftp/netboot -type d -perm 555 -print0 | xargs -r -0 chmod 775
-  when: not(altinstall_loop_mount|default('true')|bool)
-
-- name: unpack ISOs
-  command: >
-    bsdtar -x -f {{ altinstall_root_dir }}/dist/{{ item.url|basename }} -C {{ altinstall_root_dir }}/tftp/netboot/{{ item.alt_arch }}/{{ item.name|regex_replace(' ', '_')|lower }}
-  when: not(altinstall_loop_mount|default('true')|bool)
-  loop: "{{ alt_images }}"
-  loop_control:
-    label: "{{ item.name }}/{{ item.alt_arch }}"
-
-- name: ensure ISO content directories are writable again
-  shell: >
-    find {{ altinstall_root_dir }}/tftp/netboot -type d -perm 555 -print0 | xargs -r -0 chmod 775
-  when: not(altinstall_loop_mount|default('true')|bool)
