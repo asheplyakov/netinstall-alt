@@ -52,3 +52,27 @@ alt_images:
     altinst_size: 1033277440
     variants:
       - livecd
+
+  - name: ALT regular mate 20211124 x86_64
+    url: http://nightly.altlinux.org/sisyphus/snapshots/20211124/regular-mate-20211124-x86_64.iso
+    checksum:
+      sha256: fded6746a0ae15e2762159bb7e374d8fe325cb7e5746aa52991ac4d66905dc83
+    grub_arch: x86_64
+    alt_arch: x86_64
+    kernel: /boot/vmlinuz
+    initrd: /boot/initrd.img
+    variants:
+      - livecd
+    need_ramdisk_size: false
+
+  - name: ALT regular mate 20211124 aarch64
+    url: http://nightly.altlinux.org/sisyphus-aarch64/snapshots/20211124/regular-mate-20211124-aarch64.iso
+    checksum:
+      sha256: df4e771106d44294622b5984bf77e76f8f2f7d9c49600d413e6ce0550b88ae61
+    grub_arch: arm64
+    alt_arch: aarch64
+    kernel: /boot/vmlinuz
+    initrd: /boot/initrd.img
+    variants:
+      - livecd
+    need_ramdisk_size: false
