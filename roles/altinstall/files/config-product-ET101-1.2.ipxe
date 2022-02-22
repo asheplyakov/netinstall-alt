@@ -1,0 +1,4 @@
+#!ipxe
+
+echo loading settings for ET101 board revision 1.2
+set linux_extra_cmdline:string console=ttyS0,115200n8 earlycon=uart8250,mmio32,0x20230000
