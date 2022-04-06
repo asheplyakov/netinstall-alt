@@ -50,3 +50,70 @@
   ```
   ansible-playbook -i hosts site.yml
   ```
+
+
+## Hacker notes
+
+### Network boot overview
+
+* UEFI gets IP(v4) address and boot settings (file name)
+* dnsmasq (proxy DHCP) replies with bootfile=snponly-$ARCH.efi (iPXE binary)
+* UEFI downloads boot file (iPXE binary, snponly-$ARCH.efi) and runs it
+* iPXE gets IP(v4) address and boot settings with a different *user_class* `iPXE`
+* dnsmasq (proxy DHCP) replies with bootfile=config-$ARCH.ipxe (iPXE *script*)
+* iPXE runs script: downloads kernel, initramfs, and boots kernel (with specified command line)
+* initramfs (`propagator`) parses kernel command line, configures network,
+  downloads ISO image (to RAM), and runs a live system
+
+
+### Simple iPXE script (for aarch64)
+
+```
+kernel tftp/netboot/aarch64/alt_p10_xfce_20220312_aarch64/boot/vmlinuz initrd=full.cz root=bootchain bootchain=fg,altboot ip=dhcp4 changedisk fastboot live automatic=method:http,network:dhcp,server:10.42.0.96,directory:/dist/alt-p10-xfce-20220312-aarch64.iso  stagename=live showopts lang=ru_RU
+initrd tftp/netboot/aarch64/alt_p10_xfce_20220312_aarch64/boot/full.cz
+boot
+```
+
+```
+kernel path/to/vmlinuz initrd=full.cz ${propagator_arguments}
+initrd path/to/full.cz
+boot
+```
+
+
+### dnsmasq as proxy DHCP
+
+`Proxy DHCP` means that this instance of dnsmasq does NOT allocate IP(v4)
+addresses. Instead it requests IP(v4) addresses (from another DHCP server),
+adds boot options, and replies to client (with address and boot options)
+
+```
+interface=eth0 # serve requests from this interface
+
+port=0 # disable DNS service
+no-resolve
+no-hosts
+
+user=_dnsmasq
+group=_dnsmasq
+# don't run as root
+
+dhcp-range=10.1.0.1,proxy 
+# 10.1.0.1 is IP of host running dnsmasq (assigned to eth0 interface
+# specified above)
+# proxy: be a proxy DHCP
+
+enable-tftp
+tftp-root=/path/to/tftpdir
+# config-aarch64.ipxe, snponly-aarch64.efi must be there
+
+# Distinguish between firmware downloading iPXE and iPXE downloading config
+# (iPXE sets user-class option to `iPXE...something`, UEFI firmwares use
+# a different user-class)
+dhcp-userclass=set:ipxe,iPXE
+
+# ARM64 UEFI firmware should boot iPXE (aarch64/snponly.efi)
+pxe-service=tag:!ipxe,ARM64_EFI,"Network Boot",snponly-aarch64.efi
+# iPXE booted by ARM64 UEFI should "run" this config
+pxe-service=tag:ipxe,ARM64_EFI,"iPXE boot menu",config-aarch64.ipxe
+```
