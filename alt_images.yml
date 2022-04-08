@@ -5,23 +5,11 @@ local_dist_mirror: /srv/export/dist
 
 alt_images:
 
-  - name: ALT p10 mate 20211212 aarch64
-    url: http://nightly.altlinux.org/p10-aarch64/release/alt-p10-mate-20211212-aarch64.iso
+  - name: ALT p10 xfce 20220312 x86_64
+    url: http://nightly.altlinux.org/p10/release/alt-p10-xfce-20220312-x86_64.iso
     checksum:
-      sha256: cc9ef79125fad2c9e4d599d2389dfff0de02f2a0e403c1cbf584336cc9a8ea1e
-    grub_arch: arm64
-    alt_arch: aarch64
-    kernel: /boot/vmlinuz
-    initrd: /boot/full.cz
-    variants:
-      - livecd
-    need_ramdisk_size: false
-    http_iso_boot: true
-
-  - name: ALT p10 mate 20211212 x86_64
-    url: http://mirror.yandex.ru/altlinux-starterkits/release/alt-p10-mate-20211212-x86_64.iso
-    checksum:
-      sha256: 0910c934a19f702d5d4cb3d2fdcc7001ee62e9f308313ccfd09358031890f7af
+      sha256: 92e5b9007cdae4d7d2f0944df4a7b9980d69b1d0aa5e9e18530f00e34b464131
+      sha1: fff5e9893544772e3bce5e41b3c706b46fcc927f
     grub_arch: x86_64
     alt_arch: x86_64
     kernel: /boot/vmlinuz
@@ -31,62 +19,15 @@ alt_images:
     need_ramdisk_size: false
     http_iso_boot: true
 
-  - name: ALT Workstation 9.2 aarch64
-    url: https://mirror.yandex.ru/altlinux/images/p9/workstation/aarch64/alt-workstation-9.2-aarch64.iso
+  - name: ALT p10 xfce 20220312 aarch64
+    url: http://nightly.altlinux.org/p10-aarch64/release/alt-p10-xfce-20220312-aarch64.iso
     checksum:
-      sha256: 0c9d1307c0d6268e4aeaaf6ac1c0c50d0dbc875d30b891c37aea96360fab604e
-    grub_arch: arm64
-    alt_arch: aarch64
-    kernel: /EFI/BOOT/vmlinuz
-    initrd: /EFI/BOOT/full.cz
-    live_size: 1327095808
-    altinst_size: 424304640 
-
-  - name: ALT Workstation 9.2 x86_64
-    url: https://mirror.yandex.ru/altlinux/images/p9/workstation/x86_64/alt-workstation-9.2-x86_64.iso
-    checksum:
-      sha256: 4d55dffb6f79d1c4a6a9b71e0a9ae82256433102431f50c006877bb09274bb95
-    grub_arch: x86_64
-    alt_arch: x86_64
-    kernel: /EFI/BOOT/vmlinuz
-    initrd: /EFI/BOOT/full.cz
-    live_size: 1489702912
-    altinst_size: 465022976 
-
-  - name: ALT regular mate 20211215 aarch64
-    url: http://nightly.altlinux.org/sisyphus-aarch64/snapshots/20211215/regular-mate-20211215-aarch64.iso
-    checksum:
-      sha256: 67ea6a54230a9c701a96ed8b3ad4e86c661b6b135957fc4c221ddbc9c0d02d83
+      sha256: 7b93674f9739c6f07fc75fe77e0a6887ffa0cb2b51edbbceb4e641645a9dd73d
+      sha1: f7dc0e19d807f756959d2f394d7796a967b115f9
     grub_arch: arm64
     alt_arch: aarch64
     kernel: /boot/vmlinuz
-    initrd: /boot/initrd.img
-    variants:
-      - livecd
-    need_ramdisk_size: false
-    http_iso_boot: true
-
-  - name: ALT regular mate 20211124 x86_64
-    url: http://nightly.altlinux.org/sisyphus/snapshots/20211124/regular-mate-20211124-x86_64.iso
-    checksum:
-      sha256: fded6746a0ae15e2762159bb7e374d8fe325cb7e5746aa52991ac4d66905dc83
-    grub_arch: x86_64
-    alt_arch: x86_64
-    kernel: /boot/vmlinuz
-    initrd: /boot/initrd.img
-    variants:
-      - livecd
-    need_ramdisk_size: false
-    http_iso_boot: true
-
-  - name: ALT regular mate 20211124 aarch64
-    url: http://nightly.altlinux.org/sisyphus-aarch64/snapshots/20211124/regular-mate-20211124-aarch64.iso
-    checksum:
-      sha256: df4e771106d44294622b5984bf77e76f8f2f7d9c49600d413e6ce0550b88ae61
-    grub_arch: arm64
-    alt_arch: aarch64
-    kernel: /boot/vmlinuz
-    initrd: /boot/initrd.img
+    initrd: /boot/full.cz
     variants:
       - livecd
     need_ramdisk_size: false
