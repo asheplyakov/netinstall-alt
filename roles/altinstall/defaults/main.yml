@@ -6,6 +6,15 @@ local_alt_mirror: /srv/export/dist/altlinux
 
 altinstall_dhcp_interface: eth0
 
+# Do NOT allocate IPv4 addresses, just add boot options
+# (i.e. act as a DHCP proxy). This is on by default
+# altinstall_proxy_dhcp: true
+
+# Required only for complete DHCP (not a proxy one)
+# altinstall_dhcp_range:
+#   start: 192.168.0.100
+#   end: 192.168.0.254
+
 # XXX: on BE-M1000 kernel fails bring up secondary CPUs
 #      if the kernel image and initramfs have been downloaded via HTTP
 altinstall_ipxe_use_tftp:

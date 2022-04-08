@@ -1,0 +1,26 @@
+---
+
+- name: fail if DHCP range is undefined
+  fail:
+    msg: altinstall_dhcp_range must be defined
+  when: altinstall_dhcp_range is undefined
+
+- name: fail if DHCP range start is undefined
+  fail:
+    msg: "altinstall_dhcp_range.start must be defined"
+  when: altinstall_dhcp_range.start is undefined
+
+- name: fail if DHCP range end is undefined
+  fail:
+    msg: "altinstall_dhcp_range.start must be defined"
+  when: altinstall_dhcp_range.end is undefined
+
+- name: fail if DHCP range start is not a valid IPv4 address
+  fail:
+    msg: "altinstall_dhcp_range.start must be IPv4 address"
+  when: not(altinstall_dhcp_range.start|ipv4)
+
+- name: fail if DHCP range end is not a valid IPv4 address
+  fail:
+    msg: "altinstall_dhcp_range.start must be IPv4 address"
+  when: not(altinstall_dhcp_range.end|ipv4)

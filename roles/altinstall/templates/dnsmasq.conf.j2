@@ -1,0 +1,48 @@
+# Configures dnsmasq to handle both (IPv4) addresses allocation
+# and network (PXE) boot
+interface={{ altinstall_dhcp_address }}
+
+# Disable DNS services
+port=0
+
+# don't bother to read /etc/resolv.conf
+no-resolv
+# don't read /etc/hosts
+no-hosts
+
+user={{ altinstall_dnsmasq_user|default('dnsmasq') }}
+group={{ altinstall_dnsmasq_group|default('nogroup') }}
+
+dhcp-range={{ altinstall_dhcp_range.start }},{{ altinstall_dhcp_range.end }},{{ altinstall_dhcp_range.netmask|default("255.255.255.0") }},{{ altinstall_dhcp_range.lease_time|default("8h") }}
+
+# Do **NOT** send router option
+# Note: setting an empty option disables sending the option
+# at all for the option which have a default value
+# https://lists.thekelleys.org.uk/pipermail/dnsmasq-discuss/2012q3/006119.html
+dhcp-option=3
+
+log-dhcp
+
+# TFTP
+enable-tftp
+tftp-root={{ altinstall_root_dir }}/tftp
+
+# Distinguish between x86_64 and arm64
+dhcp-match=set:x86-efi,option:client-arch,7
+dhcp-match=set:arm64-efi,option:client-arch,11
+
+# Distinguish between UEFI and iPXE
+dhcp-userclass=set:ipxe,iPXE
+tag-if=set:arm64-ipxe,tag:arm64-efi,tag:ipxe
+tag-if=set:x86-ipxe,tag:x86-efi,tag:ipxe
+
+
+# PXE boot
+# arm64 UEFI: run arm64/UEFI iPXE binary
+dhcp-boot=tag:arm64-efi,snponly-aarch64.efi
+# iPXE on arm64: run this script
+dhcp-boot=tag:arm64-ipxe,config-aarch64.ipxe
+# iPXE on x86_64: run x86_64/UEFI iPXE binary
+dhcp-boot=tag:x86-efi,snponly-x86_64.efi
+# iPXE on x86_64: run this script
+dhcp-boot=tag:x86-ipxe,config-x86_64.ipxe

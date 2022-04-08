@@ -5,6 +5,10 @@
   delegate_to: localhost
   run_once: true
 
+- name: check if DHCP range is defined
+  import_tasks: validate_dhcp_range.yml
+  when: not(altinstall_proxy_dhcp|default('true')|bool)
+
 - name: add extra APT repos on ALT Linux
   include_tasks: extra_repos_altlinux.yml
   when:
@@ -275,15 +279,28 @@
     state: started
   become: true
 
-- name: install dnsmasq configuration
+- name: configure dnsmasq as DHCP proxy
   template:
-    src: ./templates/dnsmasq-altinstall.conf.j2
+    src: ./templates/dnsmasq-dhcpproxy.conf.j2
     dest: /etc/dnsmasq-altinstall.conf
     owner: root
     group: root
     mode: 644
   notify:
     - restart dnsmasq
+  when: altinstall_proxy_dhcp|default('true')|bool
+  become: true
+
+- name: configure dnsmasq
+  template:
+    src: ./templates/dnsmasq.conf.j2
+    dest: /etc/dnsmasq-altinstall.conf
+    owner: root
+    group: root
+    mode: 644
+  notify:
+    - restart dnsmasq
+  when: not(altinstall_proxy_dhcp|default('true')|bool)
   become: true
 
 - name: enable and start dnsmasq
